@@ -1,41 +1,123 @@
 const UI = {
+    // Shared properties
     reels: [],
     currentReelIndex: 0,
     viewer: null,
     nextButton: null,
     prevButton: null,
 
+    // --- Public Explore Feed ---
+
     initExploreFeed: async function() {
         this.viewer = document.getElementById('reel-viewer');
         this.nextButton = document.getElementById('next-reel');
         this.prevButton = document.getElementById('prev-reel');
 
-        if (!this.viewer || !this.nextButton || !this.prevButton) {
-            console.error('Required UI elements not found for the reel viewer.');
-            return;
-        }
+        if (!this.viewer || !this.nextButton || !this.prevButton) return;
 
-        this.nextButton.addEventListener('click', () => this.showNextReel());
-        this.prevButton.addEventListener('click', () => this.showPrevReel());
+        this.nextButton.addEventListener('click', () => this.showNextReel(this.renderExploreReel.bind(this)));
+        this.prevButton.addEventListener('click', () => this.showPrevReel(this.renderExploreReel.bind(this)));
 
         try {
             this.reels = await Http.get('/api/public/feed.php');
             if (this.reels.length > 0) {
-                this.renderReel();
+                this.renderExploreReel();
             } else {
-                this.showEmptyMessage();
+                this.showEmptyMessage("No public talent to display at the moment.");
             }
         } catch (error) {
             this.showErrorMessage();
         }
     },
 
-    renderReel: function() {
-        if (!this.reels.length) return;
-
+    renderExploreReel: function() {
         const reel = this.reels[this.currentReelIndex];
-        this.viewer.innerHTML = ''; // Clear previous content
+        this.viewer.innerHTML = '';
+        const reelItem = this.createReelItem(reel);
+        this.viewer.appendChild(reelItem);
+        this.updateNavButtons();
+    },
 
+    // --- Authenticated Client Feed ---
+
+    shortlist: [],
+    shortlistContainer: null,
+
+    initClientFeed: async function() {
+        this.viewer = document.getElementById('reel-viewer');
+        this.nextButton = document.getElementById('next-reel');
+        this.prevButton = document.getElementById('prev-reel');
+        this.shortlistContainer = document.getElementById('shortlist-items');
+
+        if (!this.viewer || !this.nextButton || !this.prevButton || !this.shortlistContainer) return;
+
+        this.nextButton.addEventListener('click', () => this.showNextReel(this.renderClientReel.bind(this)));
+        this.prevButton.addEventListener('click', () => this.showPrevReel(this.renderClientReel.bind(this)));
+
+        try {
+            this.reels = await Http.get('/api/client/feed.php');
+            if (this.reels.length > 0) {
+                this.renderClientReel();
+            } else {
+                this.showEmptyMessage("No new talent in your feed.");
+            }
+        } catch (error) {
+            this.showErrorMessage();
+        }
+    },
+
+    renderClientReel: function() {
+        const reel = this.reels[this.currentReelIndex];
+        this.viewer.innerHTML = '';
+        const reelItem = this.createReelItem(reel);
+
+        // Add client-specific controls (More menu, shortlist button)
+        const moreButton = document.createElement('button');
+        moreButton.className = 'reel-more-button';
+        moreButton.innerHTML = '•••';
+
+        const shortlistButton = document.createElement('button');
+        shortlistButton.innerHTML = 'Add to Shortlist';
+        shortlistButton.onclick = () => this.addToShortlist(reel);
+
+        const menu = document.createElement('div');
+        menu.className = 'reel-more-menu';
+        menu.appendChild(shortlistButton);
+
+        moreButton.onclick = () => menu.classList.toggle('active');
+
+        reelItem.appendChild(moreButton);
+        reelItem.appendChild(menu);
+        this.viewer.appendChild(reelItem);
+        this.updateNavButtons();
+    },
+
+    addToShortlist: function(talent) {
+        // Avoid adding duplicates
+        if (!this.shortlist.find(item => item.talent_user_id === talent.talent_user_id)) {
+            this.shortlist.push(talent);
+            this.renderShortlist();
+        }
+        // Close the menu
+        document.querySelector('.reel-more-menu.active')?.classList.remove('active');
+    },
+
+    renderShortlist: function() {
+        this.shortlistContainer.innerHTML = ''; // Clear list
+        if (this.shortlist.length === 0) {
+            this.shortlistContainer.innerHTML = '<li class="empty-shortlist">Your shortlist is empty.</li>';
+        } else {
+            this.shortlist.forEach(talent => {
+                const li = document.createElement('li');
+                li.textContent = `${talent.first_name} ${talent.last_name}`;
+                this.shortlistContainer.appendChild(li);
+            });
+        }
+    },
+
+    // --- Shared Helper Functions ---
+
+    createReelItem: function(reel) {
         const reelItem = document.createElement('div');
         reelItem.className = 'reel-item active';
 
@@ -44,7 +126,7 @@ const UI = {
             mediaElement = document.createElement('video');
             mediaElement.src = '/' + reel.file_path;
             mediaElement.autoplay = true;
-            mediaElement.muted = true; // Autoplay often requires mute
+            mediaElement.muted = true;
             mediaElement.loop = true;
             mediaElement.playsInline = true;
         } else {
@@ -59,22 +141,20 @@ const UI = {
 
         reelItem.appendChild(mediaElement);
         reelItem.appendChild(infoElement);
-        this.viewer.appendChild(reelItem);
-
-        this.updateNavButtons();
+        return reelItem;
     },
 
-    showNextReel: function() {
+    showNextReel: function(renderFunc) {
         if (this.currentReelIndex < this.reels.length - 1) {
             this.currentReelIndex++;
-            this.renderReel();
+            renderFunc();
         }
     },
 
-    showPrevReel: function() {
+    showPrevReel: function(renderFunc) {
         if (this.currentReelIndex > 0) {
             this.currentReelIndex--;
-            this.renderReel();
+            renderFunc();
         }
     },
 
@@ -83,8 +163,8 @@ const UI = {
         this.nextButton.disabled = this.currentReelIndex === this.reels.length - 1;
     },
 
-    showEmptyMessage: function() {
-        this.viewer.innerHTML = '<div class="reel-item active"><div class="reel-message">No public talent to display at the moment.</div></div>';
+    showEmptyMessage: function(message) {
+        this.viewer.innerHTML = `<div class="reel-item active"><div class="reel-message">${message}</div></div>`;
         this.nextButton.style.display = 'none';
         this.prevButton.style.display = 'none';
     },

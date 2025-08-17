@@ -51,6 +51,7 @@ try {
         $_SESSION['user_email'] = $user->email;
         $_SESSION['user_role'] = $user->getRoleName();
         $_SESSION['user_firstname'] = $user->first_name;
+        $_SESSION['user_company_id'] = $user->company_id;
 
         // Redirect based on role.
         $role = $_SESSION['user_role'];

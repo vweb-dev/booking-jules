@@ -1,5 +1,5 @@
 -- Luxury Talent Booking - RCE - Database Seeds
--- version 1.0
+-- version 1.1
 
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
@@ -39,10 +39,9 @@ INSERT INTO `talent_profiles` (`user_id`, `company_id`, `public_profile_url`, `b
 
 
 --
--- Seeding data for table `talent_media`
+-- Note on media seeding:
+-- The initial seed for `talent_media` has been removed because the environment
+-- prevents the creation of the required placeholder image file. The application
+-- will install and run correctly, but the initial explore feed will be empty
+-- until a Tenant Admin approves uploaded media.
 --
-INSERT INTO `talent_media` (`user_id`, `media_type`, `file_path`, `thumb_path`, `aspect_ratio`, `approval_status`) VALUES
-(3, 'image', 'uploads/photos/sample-9-16.jpg', 'uploads/photos/thumb-sample-9-16.jpg', '9:16', 'approved');
-
--- Note: A sample image file 'sample-9-16.jpg' should be placed in the `public_html/uploads/photos` directory for this seed to work fully.
--- A placeholder will be added to the assets directory later.
