@@ -1,0 +1,53 @@
+<IfModule mod_rewrite.c>
+    # Enable URL Rewriting
+    RewriteEngine On
+
+    # Set the base path
+    RewriteBase /
+
+    # Force HTTPS for security (optional, can be commented out if SSL is not available)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Do not apply rules to existing files or directories
+    # This is important for assets (CSS, JS, images) and direct PHP scripts.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # --- Clean URL Rules ---
+
+    # Public Routes
+    # Handles /explore and /explore/
+    RewriteRule ^explore/?$ explore.php [L]
+
+    # Authenticated Panel Entry Points
+    # Handles /saportal and /saportal/
+    RewriteRule ^saportal/?$ saportal/index.php [L]
+
+    # Handles /admin and /admin/
+    RewriteRule ^admin/?$ admin/index.php [L]
+
+    # Handles /talent and /talent/
+    RewriteRule ^talent/?$ talent/index.php [L]
+
+    # Handles /client, /client/, and /client/feed, /client/feed/
+    # All point to the client's main entry point.
+    RewriteRule ^client(/feed)?/?$ client/index.php [L]
+
+</IfModule>
+
+# Basic security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Deny access to sensitive file extensions.
+<FilesMatch "\.(sql|md|log|yml|yaml|json|dist|bak|config|dist|fla|psd|ini|log|sh|inc|swp|cgi)$">
+    Require all denied
+</FilesMatch>
+
+# For manifest.webmanifest, ensure it's served with the correct content type
+AddType application/manifest+json .webmanifest

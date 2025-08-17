@@ -1,0 +1,22 @@
+{
+  "name": "Luxury Talent Booking — Red Carpet Edition",
+  "short_name": "LTB-RCE",
+  "description": "The premier platform for connecting elite talent with exclusive opportunities.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#d4af37",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/img/logo-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/assets/img/logo-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
